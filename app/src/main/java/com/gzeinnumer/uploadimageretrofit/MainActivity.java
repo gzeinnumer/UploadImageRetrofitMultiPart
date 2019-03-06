@@ -13,6 +13,8 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -20,12 +22,20 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.gzeinnumer.uploadimageretrofit.adapter.AdapterRV;
+import com.gzeinnumer.uploadimageretrofit.model.ImagesItem;
 import com.gzeinnumer.uploadimageretrofit.model.ResponseApiModel;
+import com.gzeinnumer.uploadimageretrofit.model.ResponseDelete;
+import com.gzeinnumer.uploadimageretrofit.model.ResponseGambarNoImage;
+import com.gzeinnumer.uploadimageretrofit.model.ResponseGetData;
 import com.gzeinnumer.uploadimageretrofit.server.ApiServices;
 import com.gzeinnumer.uploadimageretrofit.server.RetroServer;
+import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.UUID;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -34,7 +44,7 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, AdapterRV.onItemClick {
 
 
     //todo 1.1
@@ -51,6 +61,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Dialog dialogNew;
     private String path;
 
+    //todo 2.1 deklar RecyclerView
+    RecyclerView recyclerData;
+
+    //todo 2.7 deklar adapter dan list
+    AdapterRV adapter;
+    private List<ImagesItem> list;
+
+    //todo 2.8.5
+    Dialog dialogUpdate;
+    EditText idDialog ;
+    Button btnUpdate;
+    Button btnDelete;
+    private String isNewImage;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,6 +86,46 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         uploadNew= findViewById(R.id.upload_new);
         uploadNew.setOnClickListener(this);
 
+        //todo 2.2
+        recyclerData=findViewById(R.id.recyclerData);
+        //todo 2.4 make data fromjson
+        //todo 2.5 make adapter
+
+        //isi list dengan data buat ApiService di class interface
+        //todo 2.8
+        getAllData();
+    }
+
+    //todo 2.8.1
+    private void getAllData() {
+        RetroServer.getInstance().getAllImage().enqueue(new Callback<ResponseGetData>() {
+            @Override
+            public void onResponse(Call<ResponseGetData> call, Response<ResponseGetData> response) {
+                boolean sukses = response.body().isSukses();
+                list = response.body().getImages();
+                if (sukses) {
+                    Toast.makeText(getApplicationContext(), "Terhubung nih!!", Toast.LENGTH_SHORT).show();
+                    //todo 2.8.2
+                    initData();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseGetData> call, Throwable t) {
+
+            }
+        });
+    }
+
+    //todo 2.8.2
+    private void initData() {
+        adapter = new AdapterRV(getApplicationContext(), list);
+        recyclerData.setLayoutManager(new LinearLayoutManager(this));
+        recyclerData.setHasFixedSize(true);
+        recyclerData.setAdapter(adapter);
+        adapter.notifyDataSetChanged();
+        //todo 2.8.3
+        adapter.setOnClickListener2(MainActivity.this);
     }
 
     //todo 1.8.1
@@ -141,6 +205,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 try {
                     Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), filePath);
                     gambarDialog.setImageBitmap(bitmap);
+                    isNewImage = "new";
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -219,6 +284,141 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             } else {
                 Toast.makeText(this, "Oops you just denied the permission", Toast.LENGTH_LONG).show();
             }
+        }
+    }
+
+    //todo 2.8.4
+    @Override
+    public void onItemClick(final int position) {
+        dialogUpdate = new Dialog(MainActivity.this);
+        dialogUpdate.setContentView(R.layout.dialog_update);
+        dialogUpdate.setTitle("hay");
+        dialogUpdate.setCancelable(true);
+        dialogUpdate.setCanceledOnTouchOutside(false);
+
+        idDialog = dialogUpdate.findViewById(R.id.id_dialog);
+        namaDialog = dialogUpdate.findViewById(R.id.nama_dialog);
+        btnPilihGambar = dialogUpdate.findViewById(R.id.btn_pilihgambar);
+        gambarDialog = dialogUpdate.findViewById(R.id.gambar_dialog);
+        btnUpdate = dialogUpdate.findViewById(R.id.btn_update);
+        btnDelete = dialogUpdate.findViewById(R.id.btn_delete);
+
+        idDialog.setText(list.get(position).getId());
+        namaDialog.setText(list.get(position).getName());
+        Picasso.get().load(Constants.BASE_IMAGE_URL + list.get(position).getUrl())
+                .into(gambarDialog);
+
+        isNewImage="old";
+
+        btnPilihGambar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showFileChooser();
+            }
+        });
+
+        btnDelete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                deleteDataFromDataBase(position);
+            }
+        });
+
+        btnUpdate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                uploadMultipartUpdate(position);
+            }
+        });
+
+
+        dialogUpdate.show();
+    }
+
+    private void deleteDataFromDataBase(int position) {
+        RetroServer.getInstance().deleteData(list.get(position).getId()).enqueue(new Callback<ResponseDelete>() {
+            @Override
+            public void onResponse(Call<ResponseDelete> call, Response<ResponseDelete> response) {
+                String result = response.body().getResult();
+                if(result.equals("1")){
+                    dialogUpdate.dismiss();
+                    Toast.makeText(MainActivity.this, "Data Didelete", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ResponseDelete> call, Throwable t) {
+
+            }
+        });
+    }
+
+    public void uploadMultipartUpdate(int position) {
+        //getting name for the image
+        String nameNew = namaDialog.getText().toString().trim();
+
+        //getting the actual path of the image
+        String pathNew = "";
+        if (isNewImage.equals("new")){
+            pathNew = getPath(filePath);
+        } else {
+
+        }
+
+        //Uploading code
+        if (isNewImage.equals("new")) {
+            nameNew = namaDialog.getText().toString().trim();
+
+            //todo 1.8
+            pathNew = getPath(filePath);
+
+//            Toast.makeText(this, nameNew, Toast.LENGTH_SHORT).show();
+            File imagefile = new File(pathNew);
+            RequestBody reqBody = RequestBody.create(MediaType.parse("multipart/form-file"),imagefile);
+            RequestBody nameSent = RequestBody.create(MediaType.parse("text/plain"), nameNew);
+            RequestBody isNewImageSent = RequestBody.create(MediaType.parse("text/plain"), isNewImage);
+
+            //$_POST['image']
+            String imagePost = "image";
+            MultipartBody.Part partImage = MultipartBody.Part.createFormData(imagePost, imagefile.getName(),reqBody);
+
+            ApiServices api = RetroServer.getInstance();
+            Call<ResponseApiModel> upload = api.uploadImageUpdate(partImage, nameSent, isNewImageSent);
+            upload.enqueue(new Callback<ResponseApiModel>() {
+                @Override
+                public void onResponse(Call<ResponseApiModel> call, Response<ResponseApiModel> response) {
+                    Log.d("RETRO", "ON RESPONSE  : " + response.body().toString());
+
+                    if(!response.body().isError())
+                    {
+                        Toast.makeText(MainActivity.this, "Uploaded", Toast.LENGTH_SHORT).show();
+                    }else
+                    {
+                        Toast.makeText(MainActivity.this, "Not Uploaded", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ResponseApiModel> call, Throwable t) {
+                    Log.d("RETRO", "ON FAILURE : " + t.getMessage());
+                    Toast.makeText(MainActivity.this, "test "+t.getMessage(), Toast.LENGTH_SHORT).show();
+                }
+            });
+        } else {
+            RetroServer.getInstance().updateDataNoImageChanged(list.get(position).getId(),nameNew).enqueue(new Callback<ResponseGambarNoImage>() {
+                @Override
+                public void onResponse(Call<ResponseGambarNoImage> call, Response<ResponseGambarNoImage> response) {
+                    boolean result = response.body().isSukses();
+                    if (!result){
+                        Toast.makeText(MainActivity.this, "Diupdate", Toast.LENGTH_SHORT).show();
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<ResponseGambarNoImage> call, Throwable t) {
+
+                }
+            });
         }
     }
 }

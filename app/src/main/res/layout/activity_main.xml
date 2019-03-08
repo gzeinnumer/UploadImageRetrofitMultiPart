@@ -8,6 +8,7 @@
     android:padding="16dp"
     tools:context=".MainActivity">
 
+    <!--todo 1. make button-->
     <Button
         android:id="@+id/upload_new"
         android:text="New"
@@ -16,6 +17,7 @@
         android:layout_height="wrap_content" />
 
 
+    <!--todo 19.-->
     <android.support.v7.widget.RecyclerView
         android:id="@+id/recyclerData"
         android:layout_weight="1"

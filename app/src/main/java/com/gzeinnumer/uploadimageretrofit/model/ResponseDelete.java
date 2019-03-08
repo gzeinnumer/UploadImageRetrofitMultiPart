@@ -2,6 +2,7 @@ package com.gzeinnumer.uploadimageretrofit.model;
 
 import com.google.gson.annotations.SerializedName;
 
+//todo 52.1
 public class ResponseDelete{
 
 	@SerializedName("result")

@@ -2,6 +2,7 @@ package com.gzeinnumer.uploadimageretrofit.model;
 
 import com.google.gson.annotations.SerializedName;
 
+//todo 44.1
 public class ResponseApiModel{
 
 	@SerializedName("name")

@@ -17,24 +17,26 @@ import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 import java.util.List;
 
-//todo 2.5 adapter
+//todo 28.
 public class AdapterRV extends RecyclerView.Adapter<AdapterRV.MyHolder> {
 
-    //todo 2.6 deklar Contex dan List
     private Context mContex;
     private List<ImagesItem> mList = new ArrayList();
-
-    private onItemClick click;
 
     public AdapterRV(Context mContex, List<ImagesItem> mList) {
         this.mContex = mContex;
         this.mList = mList;
     }
 
+    //todo 32.
+    private onItemClick click;
+
     @NonNull
     @Override
     public MyHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
+        //todo 29.
         View view = LayoutInflater.from(mContex).inflate(R.layout.item, viewGroup, false);
+        //todo 31.
         MyHolder myHolder = new MyHolder(view);
         return myHolder;
     }
@@ -67,10 +69,12 @@ public class AdapterRV extends RecyclerView.Adapter<AdapterRV.MyHolder> {
         }
     }
 
+    //todo 33.
     public interface onItemClick {
         void onItemClick(int position);
     }
 
+    //todo 34.
     public void setOnClickListener2(onItemClick onClick) {
         click = onClick;
     }

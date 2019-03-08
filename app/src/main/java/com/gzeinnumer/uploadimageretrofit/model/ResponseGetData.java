@@ -2,7 +2,7 @@ package com.gzeinnumer.uploadimageretrofit.model;
 
 import java.util.List;
 import com.google.gson.annotations.SerializedName;
-
+//todo 23.1
 public class ResponseGetData{
 
 	@SerializedName("images")

@@ -2,6 +2,7 @@ package com.gzeinnumer.uploadimageretrofit.model;
 
 import com.google.gson.annotations.SerializedName;
 
+//todo 47.1
 public class ResponseGambarNoImage{
 
 	@SerializedName("sukses")

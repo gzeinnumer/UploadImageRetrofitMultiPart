@@ -2,6 +2,7 @@ package com.gzeinnumer.uploadimageretrofit.model;
 
 import com.google.gson.annotations.SerializedName;
 
+//todo 23.2
 public class ImagesItem{
 
 	@SerializedName("name")

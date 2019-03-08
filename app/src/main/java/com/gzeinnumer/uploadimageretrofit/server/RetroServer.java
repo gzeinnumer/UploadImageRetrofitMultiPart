@@ -6,6 +6,7 @@ import com.gzeinnumer.uploadimageretrofit.Constants;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+//todo 15.
 public class RetroServer {
 
     public static Retrofit setInit(){
